@@ -20,8 +20,8 @@ use PayPal\Api\OpenIdUserinfo;
 class CommonController extends Controller
 {
 	static $PAYPAL_ENV = "sandbox";
-	static $sanbox_clientId = "AQoXozL0vqCmDF2M47DHbx_4P_J_RV5R1v4zwpb0ges92qZz9A2Z9jVx43A1GWjR3Rx5muNgB41T_jj6";
-	static $sanbox_clientSecret = "EC5eEcxlEQonzP18hpcDa-mUiUuWjXlUOOtKLAcR0Si99uvLOcZX2K-UDU3Y00eaPBXvwAg6WlTjlE6o";
+	static $sanbox_clientId = "";
+	static $sanbox_clientSecret = "";
 	static $log = true;
 	static $baseURLTest;
 
@@ -30,15 +30,28 @@ class CommonController extends Controller
 	}
 
     function test(){
+    	if( !isset($_ENV['PAYPAL_SANBOX_CLIENTID']) ){
+			abort(450,"Please define PAYPAL_SANBOX_CLIENTID in .env file");
+		}
+		if( !isset($_ENV['PAYPAL_SANBOX_CLIENTSECRET']) ){
+			abort(450,"Please define PAYPAL_SANBOX_CLIENTSECRET in .env file");
+		}
+
+    	self::$sanbox_clientId = $_ENV['PAYPAL_SANBOX_CLIENTID'];
+		self::$sanbox_clientSecret = $_ENV['PAYPAL_SANBOX_CLIENTSECRET'];
+
     	return view('paypal::test')
-    		->with('PAYPAL_ENV',self::$PAYPAL_ENV)
+    		->with('PAYPAL_ENV',"sandbox")
     		->with('baseURLTest',self::$baseURLTest);
     }
 
     function TestExecute(Request $request){
+    	self::$sanbox_clientId = $_ENV['PAYPAL_SANBOX_CLIENTID'];
+		self::$sanbox_clientSecret = $_ENV['PAYPAL_SANBOX_CLIENTSECRET'];
+
     	$this->InitializeApiContext(self::$sanbox_clientId,
 	    		self::$sanbox_clientSecret,
-	    		self::$PAYPAL_ENV
+	    		"sandbox"
 		);
 		/*
 		$_POST["paymentID"] = "PAY-7V134197HY484634PLHTB35A";
@@ -83,9 +96,12 @@ class CommonController extends Controller
 	}
 
     function TestCreate(){
+    	self::$sanbox_clientId = $_ENV['PAYPAL_SANBOX_CLIENTID'];
+		self::$sanbox_clientSecret = $_ENV['PAYPAL_SANBOX_CLIENTSECRET'];
+
     	$this->InitializeApiContext(self::$sanbox_clientId,
 	    		self::$sanbox_clientSecret,
-	    		self::$PAYPAL_ENV
+	    		"sandbox"
 		);
 
 		$total = 0.12;
@@ -104,7 +120,7 @@ class CommonController extends Controller
 		$transaction = new Transaction();
 		$transaction->setAmount($amount)
 			->setDescription($shopping_cart_id)
-			->setInvoiceNumber(self::$PAYPAL_ENV.$shopping_cart_id);
+			->setInvoiceNumber("sandbox".$shopping_cart_id);
 
 		$payer = new Payer();
 		$payer->setPaymentMethod("paypal");
