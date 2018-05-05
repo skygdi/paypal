@@ -1,0 +1,29 @@
+{
+    "name": "skygdi/paypal",
+    "description": "include donation demo",
+    "type": "library",
+    "require": {
+        "paypal/rest-api-sdk-php": "^1.13"
+    },
+    "autoload": {
+        "psr-4": {
+            "skygdi\\paypal\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "skygdi\\paypal\\PayPalProvider"
+            ],
+            "aliases": {
+                "EasyPayPal": "skygdi\\paypal\\MongoFacade"
+            }
+        }
+    },
+    "authors": [
+        {
+            "name": "skygdi",
+            "email": "skygdi83@gmail.com"
+        }
+    ]
+}
