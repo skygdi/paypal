@@ -1,4 +1,4 @@
-### Quick paypal button deploy for Laravel
+### Quick paypal button deploy for Laravel v0.2
 Setup:
 #### composer require skygdi/paypal
 Add paypal info to your .env file:
