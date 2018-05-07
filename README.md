@@ -53,3 +53,4 @@ Route::post('paypal/execute', function (Request $request) {
 ___
 Quick test url: 
 ##### yourURL/skygdi/paypal/test
+
