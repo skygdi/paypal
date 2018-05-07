@@ -137,7 +137,7 @@ class CommonController extends Controller
 	    catch (\PayPal\Exception\PayPalConnectionException $ex) {
 		    $ex_json = json_decode( $ex->getData(),true ); // Prints the detailed error message 
 		    return ["state"=>"error","text"=>$ex_json["name"]];
-		} 
+		}
 	    catch (Exception $ex) {
 		    return ["state"=>"error","text"=>"unknow"];
 		    exit();

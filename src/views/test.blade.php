@@ -5,8 +5,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<script
-		src="/cdn/jquery/js/jquery-3.1.1.min.js"
-		crossorigin="anonymous"></script>
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
 
 	<!-- Latest compiled and minified CSS -->
 	<!-- Bootstrap -->
@@ -50,7 +51,13 @@ paypal.Button.render({
                 'x-csrf-token': '{{ csrf_token() }}'
             }
         }).then(function(data) {
-            return data.id;
+            if( data.state=="error" ){
+                toastr.error('Error', data.text);
+                return false;
+            }
+            else{
+                return data.id;
+            }
         });
     },
 

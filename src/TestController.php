@@ -55,12 +55,23 @@ class TestController extends CommonController
 			->setIntent("sale")
 			->setRedirectUrls($redirectUrls)
 		    ->setTransactions([$transaction]);
-		$i = $obj_payment->create($this->apiContext);
+	    try{
+			$i = $obj_payment->create($this->apiContext);
 
-		//$_SESSION["ordering_id"] = $shopping_cart_id;
-		Session::put('ordering_id', $shopping_cart_id);
+			//$_SESSION["ordering_id"] = $shopping_cart_id;
+			Session::put('ordering_id', $shopping_cart_id);
+			echo json_encode( array("id"=>$i->id) );
+		}
+		catch (\PayPal\Exception\PayPalConnectionException $ex) {
+		    $ex_json = json_decode( $ex->getData(),true ); // Prints the detailed error message 
+		    //header('HTTP/1.1 500 Internal Server Error');
+		    //var_dump($ex_json);exit();
+		    $str = $ex_json["error"].",".$ex_json["error_description"];
+		    return ["state"=>"error","text"=>$str];
+		}
 
-		echo json_encode( array("id"=>$i->id) );
+		
+
     }
 
     function TestExecute(Request $request){

@@ -22,7 +22,14 @@ $(document).ready(function () {
                     'x-csrf-token': '{{ csrf_token() }}'
                 }
             }).then(function(data) {
-                return data.id;
+                if( data.state=="error" ){
+                    alert(data.text);
+                    //toastr.error('Error', data.text);
+                    return false;
+                }
+                else{
+                    return data.id;
+                }
             });
         },
 
