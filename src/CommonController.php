@@ -4,6 +4,7 @@ namespace skygdi\paypal;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use View;
 
 use Session;
 
@@ -19,59 +20,107 @@ use PayPal\Api\OpenIdUserinfo;
 
 class CommonController extends Controller
 {
-	static $PAYPAL_ENV = "sandbox";
-	static $sanbox_clientId = "";
-	static $sanbox_clientSecret = "";
+	static $client_ID = "";
+	static $client_secret = "";
 	static $log = true;
-	static $baseURLTest;
+	
 
 	function __construct(){
-		self::$baseURLTest = url('skygdi/paypal/test/');
 	}
 
     function test(){
-    	if( !isset($_ENV['PAYPAL_SANBOX_CLIENTID']) ){
-			abort(450,"Please define PAYPAL_SANBOX_CLIENTID in .env file");
-		}
-		if( !isset($_ENV['PAYPAL_SANBOX_CLIENTSECRET']) ){
-			abort(450,"Please define PAYPAL_SANBOX_CLIENTSECRET in .env file");
-		}
+		return view('paypal::test');
+    }
 
-    	self::$sanbox_clientId = $_ENV['PAYPAL_SANBOX_CLIENTID'];
-		self::$sanbox_clientSecret = $_ENV['PAYPAL_SANBOX_CLIENTSECRET'];
+    function Create(Request $request){
+    	$this->InitializeApiContext();
 
-    	return view('paypal::test')
-    		->with('PAYPAL_ENV',"sandbox")
-    		->with('baseURLTest',self::$baseURLTest);
+		$total = $request->get('order_total');
+		$shopping_cart_id = $request->get('order_id');
+
+		//Paypal
+		//$i = $this->CreateBase($total,$shopping_cart_id);
+		$redirectUrls = new RedirectUrls();
+		$redirectUrls->setReturnUrl($_ENV['APP_URL']."/payment/paypal/return")
+		    ->setCancelUrl($_ENV['APP_URL']."/payment/paypal/cancel");
+		$amount = new Amount();
+		$amount->setCurrency("USD")
+		    ->setTotal($total);
+
+		$transaction = new Transaction();
+		$transaction->setAmount($amount)
+			->setDescription($shopping_cart_id)
+			->setInvoiceNumber($_ENV['PAYPAL_ENV'].$shopping_cart_id);
+
+		$payer = new Payer();
+		$payer->setPaymentMethod("paypal");
+
+		$obj_payment = new Payment();
+		$obj_payment->setPayer($payer)
+			->setIntent("sale")
+			->setRedirectUrls($redirectUrls)
+		    ->setTransactions([$transaction]);
+		$i = $obj_payment->create($this->apiContext);
+
+		//$_SESSION["ordering_id"] = $shopping_cart_id;
+		Session::put('ordering_id', $shopping_cart_id);
+
+		echo json_encode( array("id"=>$i->id) );
+    }
+
+    function TestCreate(Request $request){
+    	$this->InitializeApiContext();
+
+		$total = $request->get('order_total');
+		$shopping_cart_id = $request->get('order_id');
+		
+
+		//Paypal
+		//$i = $this->CreateBase($total,$shopping_cart_id);
+		$redirectUrls = new RedirectUrls();
+		$redirectUrls->setReturnUrl($_ENV['APP_URL']."/payment/paypal/return")
+		    ->setCancelUrl($_ENV['APP_URL']."/payment/paypal/cancel");
+		$amount = new Amount();
+		$amount->setCurrency("USD")
+		    ->setTotal($total);
+
+		$transaction = new Transaction();
+		$transaction->setAmount($amount)
+			->setDescription($shopping_cart_id)
+			->setInvoiceNumber($_ENV['PAYPAL_ENV'].$shopping_cart_id);
+
+		$payer = new Payer();
+		$payer->setPaymentMethod("paypal");
+
+		$obj_payment = new Payment();
+		$obj_payment->setPayer($payer)
+			->setIntent("sale")
+			->setRedirectUrls($redirectUrls)
+		    ->setTransactions([$transaction]);
+		$i = $obj_payment->create($this->apiContext);
+
+		//$_SESSION["ordering_id"] = $shopping_cart_id;
+		Session::put('ordering_id', $shopping_cart_id);
+
+		echo json_encode( array("id"=>$i->id) );
     }
 
     function TestExecute(Request $request){
-    	self::$sanbox_clientId = $_ENV['PAYPAL_SANBOX_CLIENTID'];
-		self::$sanbox_clientSecret = $_ENV['PAYPAL_SANBOX_CLIENTSECRET'];
-
-    	$this->InitializeApiContext(self::$sanbox_clientId,
-	    		self::$sanbox_clientSecret,
-	    		"sandbox"
-		);
-		/*
-		$_POST["paymentID"] = "PAY-7V134197HY484634PLHTB35A";
-        $_POST["payerID"] = "VLXCYC4VLPCKC";
-        */
-        //exit();
+    	$this->InitializeApiContext();
         if( Session::has('ordering_id') ){
         	//Mark order as paying
         }
 
         if( !$request->has("paymentID") || !$request->has("payerID") ) return ["state"=>"error","text"=>"parameter required"];
 
-        $p = $this->ExecuteBase($request);
-        if( $p->state=="approved" ){
+        $p = $this->Execute($request);
+        if( isset($p->state) && $p->state=="approved" ){
         	//Mark order as finished
 			return ["state"=>"success"];
         }
     }
 
-    public function ExecuteBase($request){
+    public function Execute(Request $request){
 		
 		$paymentID = $request->get('paymentID');
 		$payerID = $request->get('payerID');
@@ -95,54 +144,38 @@ class CommonController extends Controller
     	}
 	}
 
-    function TestCreate(){
-    	self::$sanbox_clientId = $_ENV['PAYPAL_SANBOX_CLIENTID'];
-		self::$sanbox_clientSecret = $_ENV['PAYPAL_SANBOX_CLIENTSECRET'];
+    public function InitializeApiContext(){
 
-    	$this->InitializeApiContext(self::$sanbox_clientId,
-	    		self::$sanbox_clientSecret,
-	    		"sandbox"
-		);
+    	if( !isset($_ENV['PAYPAL_SANBOX_CLIENTID']) ){
+			abort(450,"Please define PAYPAL_SANBOX_CLIENTID in .env file");
+		}
+		if( !isset($_ENV['PAYPAL_SANBOX_CLIENTSECRET']) ){
+			abort(450,"Please define PAYPAL_SANBOX_CLIENTSECRET in .env file");
+		}
+		if( !isset($_ENV['PAYPAL_CLIENTID']) ){
+			abort(450,"Please define PAYPAL_CLIENTID in .env file");
+		}
+		if( !isset($_ENV['PAYPAL_CLIENTSECRET']) ){
+			abort(450,"Please define PAYPAL_CLIENTSECRET in .env file");
+		}
+		if( !isset($_ENV['PAYPAL_ENV']) ){
+			abort(450,"Please define PAYPAL_ENV in .env file");
+		}
 
-		$total = 0.12;
-		$shopping_cart_id = time();
-		
+		//production or sandbox
+		if( $_ENV['PAYPAL_ENV']=="production" ){
+			self::$client_ID 		= $_ENV['PAYPAL_CLIENTID'];
+			self::$client_secret 	= $_ENV['PAYPAL_CLIENTSECRET'];
+		}
+		else{
+			self::$client_ID 		= $_ENV['PAYPAL_SANBOX_CLIENTID'];
+			self::$client_secret 	= $_ENV['PAYPAL_SANBOX_CLIENTSECRET'];
+		}
 
-		//Paypal
-		//$i = $this->CreateBase($total,$shopping_cart_id);
-		$redirectUrls = new RedirectUrls();
-		$redirectUrls->setReturnUrl($_ENV['APP_URL']."/payment/paypal/return")
-		    ->setCancelUrl($_ENV['APP_URL']."/payment/paypal/cancel");
-		$amount = new Amount();
-		$amount->setCurrency("USD")
-		    ->setTotal($total);
-
-		$transaction = new Transaction();
-		$transaction->setAmount($amount)
-			->setDescription($shopping_cart_id)
-			->setInvoiceNumber("sandbox".$shopping_cart_id);
-
-		$payer = new Payer();
-		$payer->setPaymentMethod("paypal");
-
-		$obj_payment = new Payment();
-		$obj_payment->setPayer($payer)
-			->setIntent("sale")
-			->setRedirectUrls($redirectUrls)
-		    ->setTransactions([$transaction]);
-		$i = $obj_payment->create($this->apiContext);
-
-		//$_SESSION["ordering_id"] = $shopping_cart_id;
-		Session::put('ordering_id', $shopping_cart_id);
-
-		echo json_encode( array("id"=>$i->id) );
-    }
-
-    private function InitializeApiContext($clientId,$clientSecret,$PAYPAL_ENV){
 		$this->apiContext = new \PayPal\Rest\ApiContext(
 		    new \PayPal\Auth\OAuthTokenCredential(
-		        $clientId,     // ClientID
-		        $clientSecret  // ClientSecret
+		        self::$client_ID,     // ClientID
+		        self::$client_secret  // ClientSecret
 		    )
 		);
 
@@ -156,12 +189,10 @@ class CommonController extends Controller
 		    );
 	    }
 
-	    if( $PAYPAL_ENV=="production" ){
-		    $this->apiContext->setConfig(
-		      array(
-		        'mode' => 'live',
-		      )
-			);
+	    if( $_ENV['PAYPAL_ENV']=="production" ){
+		    $this->apiContext->setConfig([
+	        	'mode' => 'live',
+		    ]);
 		}
 	}
 }

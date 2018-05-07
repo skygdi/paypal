@@ -7,6 +7,8 @@ Route::get('skygdi/test/paypal', function(){
 */
 
 Route::get('skygdi/paypal/test', 'skygdi\paypal\CommonController@test');
-Route::post('skygdi/paypal/test/create', 'skygdi\paypal\CommonController@TestCreate');
-Route::post('skygdi/paypal/test/execute', 'skygdi\paypal\CommonController@TestExecute');
-Route::post('skygdi/paypal/test/paid', 'skygdi\paypal\CommonController@TestPaid');
+
+Route::post('skygdi/paypal/test/create', 'skygdi\paypal\TestController@TestCreate');
+Route::post('skygdi/paypal/test/execute', 'skygdi\paypal\TestController@TestExecute');
+
+Route::post('paypal/create', 'skygdi\paypal\CommonController@Create');

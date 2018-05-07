@@ -25,6 +25,12 @@ class PayPalProvider extends ServiceProvider
     {
         //
         include __DIR__.'/routes.php';
+
+        $this->loadViewsFrom(__DIR__.'/views', 'paypal');
+
+        $this->publishes([
+            __DIR__.'/views/paypal_button.blade.php' => base_path('resources/views/vendor/skygdi/paypal_button.blade.php'),
+        ]);
     }
 
     /**
@@ -36,6 +42,6 @@ class PayPalProvider extends ServiceProvider
     {
         // register our controller
         $this->app->make('skygdi\paypal\CommonController');
-        $this->loadViewsFrom(__DIR__.'/views', 'paypal');
+        
     }
 }
